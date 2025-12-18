@@ -13,5 +13,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Hello"
+rootProject.name = "blacksheep"
 include ':app'
