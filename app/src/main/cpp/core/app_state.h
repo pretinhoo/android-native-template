@@ -9,4 +9,11 @@ struct AppState {
     // FPS
     double last_fps_ts = 0.0;
     int frames = 0;
+
+    // Reverse/dev actions
+    bool request_dump_maps = false;
+
+    // Input timing
+    double last_tap_ts = 0.0;
+
 };

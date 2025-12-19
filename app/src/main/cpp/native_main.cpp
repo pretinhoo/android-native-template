@@ -3,6 +3,8 @@
 
 #include "platform/log.h"
 #include "platform/input.h"
+#include "platform/fs.h"
+#include "platform/proc_maps.h"
 #include "core/app_state.h"
 #include "core/time_utils.h"
 #include "render/renderer_egl.h"
@@ -69,35 +71,62 @@ void android_main(android_app* app) {
     android_poll_source* source;
 
     while (true) {
-        while (true) {
-            // Procesa eventos del sistema (no bloqueante: timeout=0)
-            while (ALooper_pollOnce(0, nullptr, &events, (void**)&source) >= 0) {
-                if (source) source->process(app, source);
+        // Procesa eventos del sistema (no bloqueante: timeout=0)
+        while (ALooper_pollOnce(0, nullptr, &events, (void**)&source) >= 0) {
+            if (source) source->process(app, source);
 
-                if (app->destroyRequested) {
-                    LOGI("destroyRequested -> exiting");
-                    return;
-                }
+            if (app->destroyRequested) {
+                LOGI("destroyRequested -> exiting");
+                return;
             }
-
-            if (gEgl) {
-                egl_draw(*gEgl, gState.clear_r, gState.clear_g, gState.clear_b);
-
-                gState.frames++;
-                const double t = now_seconds();
-                const double dt = t - gState.last_fps_ts;
-                if (dt >= 1.0) {
-                    const double fps = (double)gState.frames / dt;
-                    LOGI("FPS: %.1f", fps);
-                    gState.frames = 0;
-                    gState.last_fps_ts = t;
-                }
-            }
-
-            usleep(16000);
         }
 
+        // =========================
+        // Reverse/dev actions: dump /proc/self/maps
+        // =========================
+        if (gState.request_dump_maps) {
+            gState.request_dump_maps = false;
 
-        usleep(16000); // ~60 fps, sin quemar CPU
+            const char* base = (app && app->activity) ? app->activity->internalDataPath : nullptr;
+
+            if (!base) {
+                LOGE("Dump maps: internalDataPath is null");
+            } else {
+                LOGI("Dump maps: internalDataPath = %s", base);
+
+                const std::string maps = read_proc_self_maps();
+                if (maps.empty()) {
+                    LOGE("Dump maps: failed to read /proc/self/maps (empty)");
+                } else {
+                    const std::string pathA = std::string(base) + "/proc_self_maps.txt";
+                    const std::string pathB = std::string(base) + "/files/proc_self_maps.txt";
+
+                    const bool okA = write_text_file(pathA, maps);
+                    const bool okB = write_text_file(pathB, maps);
+
+                    LOGI("Dump maps: bytes=%zu", maps.size());
+                    LOGI("Dump maps: write A %s -> %s", okA ? "OK" : "FAIL", pathA.c_str());
+                    LOGI("Dump maps: write B %s -> %s", okB ? "OK" : "FAIL", pathB.c_str());
+                }
+            }
+        }
+
+        // Render
+        if (gEgl) {
+            egl_draw(*gEgl, gState.clear_r, gState.clear_g, gState.clear_b);
+
+            // FPS log cada ~1s
+            gState.frames++;
+            const double t = now_seconds();
+            const double dt = t - gState.last_fps_ts;
+            if (dt >= 1.0) {
+                const double fps = (double)gState.frames / dt;
+                LOGI("FPS: %.1f", fps);
+                gState.frames = 0;
+                gState.last_fps_ts = t;
+            }
+        }
+
+        usleep(16000); // ~60 fps
     }
 }

@@ -1,4 +1,5 @@
 #include "input.h"
+#include "../core/time_utils.h"
 #include "../core/app_state.h"
 #include "log.h"
 
@@ -23,10 +24,22 @@ bool handle_input_event(AppState& st, AInputEvent* event) {
             const float x = AMotionEvent_getX(event, 0);
             const float y = AMotionEvent_getY(event, 0);
 
+            const double t = now_seconds();
+            const double dt = t - st.last_tap_ts;
+            st.last_tap_ts = t;
+
+            // Doble tap: dump /proc/self/maps
+            if (dt > 0.0 && dt < 0.35) {
+                LOGI("Double-tap at (%.1f, %.1f) -> request maps dump", x, y);
+                st.request_dump_maps = true;
+                return true;
+            }
+
             LOGI("Touch DOWN at (%.1f, %.1f) -> change color", x, y);
             cycle_color(st);
-            return true; // consumido
+            return true;
         }
+
     }
     return false;
 }

@@ -1,19 +1,19 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.appsforsusers.hello">
+    package="com.appsforsusers.blacksheep">
 
     <application
-        android:label="Hello"
+        android:label="blacksheep"
         android:hasCode="false">
 
         <activity
             android:name="android.app.NativeActivity"
-            android:label="Hello"
+            android:label="blacksheep"
             android:exported="true"
             android:configChanges="orientation|screenSize|keyboardHidden">
 
             <meta-data
                 android:name="android.app.lib_name"
-                android:value="hello" />
+                android:value="blacksheep" />
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
