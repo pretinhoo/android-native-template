@@ -1,7 +1,7 @@
 #include <android/log.h>
 #include <android_native_app_glue.h>
 
-#define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, "HelloNative", __VA_ARGS__))
+#define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, "blacksheep_native", __VA_ARGS__))
 
 static void handle_cmd(struct android_app* app, int32_t cmd) {
     switch (cmd) {
